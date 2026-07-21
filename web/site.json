@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "name": "redloop",
+  "github": "https://github.com/SuperMarioYL/redloop",
+  "host": "redloop.lei6393.com",
+  "lang": { "primary": "zh", "toggle": true },
+  "accent": ["#d4565a", "#b8453a"],
+  "hero": {
+    "eyebrow": { "zh": "开源 · 红队 · 无需账号", "en": "Open-source · Red-team · No account" },
+    "headline": { "zh": "让你的 Agent\n先被攻击一次再上线", "en": "Attack your Agent\nbefore you ship it" },
+    "sub": { "zh": "自动发明 prompt-injection 攻击，重放劫持，产出可复用的强化训练数据——单进程 CLI，今天就能跑。", "en": "Auto-invents prompt-injection attacks, replays the hijack, and emits reusable hardening training data — a single-process CLI that runs today." },
+    "command": "redloop run --preset demo",
+    "cta": { "zh": "无 key 跑一遍", "en": "Run the keyless demo" },
+    "ctaGithub": { "zh": "GitHub", "en": "GitHub" },
+    "scroll": { "zh": "看它怎么工作", "en": "See how it works" }
+  },
+  "advantages": [
+    {
+      "title": { "zh": "一条命令，看见你的 Agent 被劫持", "en": "One command, watch your Agent get hijacked" },
+      "body": { "zh": "无需 API key——重放一个手工注入，当场打印 Agent 被诱导调用了不该调用的工具。", "en": "No API key needed — replay one hand-crafted injection and watch the Agent get tricked into calling a tool it shouldn't." },
+      "chips": ["› 无 key 演示", "› 可见劫持", "› 端到端跑通"]
+    },
+    {
+      "title": { "zh": "自动发明攻击，不止手写那几个", "en": "Auto-invents attacks, not just the few you'd hand-write" },
+      "body": { "zh": "攻击模型自动发明多个注入载荷并逐一重放——你不再需要手写少量注入 prompt、跑一次就扔。", "en": "The attacker model invents multiple injection payloads and replays each — you stop hand-writing a few prompts and running them once." },
+      "chips": ["› 自发明多个载荷", "› 逐一重放", "› 兼容 OpenAI-标准端点"]
+    },
+    {
+      "title": { "zh": "每次劫持都变成训练数据", "en": "Every hijack becomes training data" },
+      "body": { "zh": "每次成功的攻击被转成「攻击 + 期望安全响应 + exploit 轨迹」的训练对，写成 JSONL——红队的失败从此承载可复用信号。", "en": "Each successful attack becomes a training pair — attack + expected safe response + exploit trace — written as JSONL. Red-team failures finally carry reusable signal." },
+      "chips": ["› 训练对 JSONL", "› 攻击+安全响应+轨迹", "› 闭合红队循环"]
+    }
+  ],
+  "scene": { "kind": "orbit" },
+  "cta": {
+    "headline": { "zh": "把红队循环开给每一个造 Agent 的团队", "en": "Open the red-team loop to every team building an Agent" },
+    "sub": { "zh": "开源 · MIT · 单进程 CLI，今天就能跑。", "en": "Open-source · MIT · single-process CLI, runs today." },
+    "button": { "zh": "看 Demo", "en": "See the demo" }
+  },
+  "footer": { "tag": { "zh": "开源对抗式红队 · MIT", "en": "Open-source adversarial red-team · MIT" } }
+}
