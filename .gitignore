@@ -1,0 +1,78 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# ---- Distribution / packaging ----
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ---- Virtual environments ----
+.venv/
+venv/
+env/
+ENV/
+
+# ---- Testing / coverage ----
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+
+# ---- Type checkers / linters ----
+.mypy_cache/
+.ruff_cache/
+.pytype/
+.pyre/
+
+# ---- IDEs / editors ----
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Build / pipeline scratch files ----
+.builder_*
+.build_metadata*
+.stage_*
+_build_ctx.json
+*_BLOCKED.md
+DRIFT*
+.spawn.*
+BUILD_SETUP_NEXT_STEPS.md
+
+# ---- Local assistant / project config ----
+.claude/
+CLAUDE.md
+
+# ---- Runtime outputs (generated per run, do not track) ----
+/hardening.jsonl
+/hardening_*.jsonl
+
+# ---- Local config overrides (the shipped template redloop.toml IS tracked) ----
+redloop.toml.local
+*.local.toml

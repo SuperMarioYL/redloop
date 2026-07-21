@@ -1,0 +1,27 @@
+# RedLoop configuration.
+# `redloop init` writes this template; `redloop run` reads it.
+# Lines starting with # are comments. Uncomment a line to override a default.
+
+# ---- Attacker LLM (OpenAI-compatible) ----
+# The attacker auto-invents prompt-injection payloads. Any OpenAI-compatible
+# endpoint works: official OpenAI, ollama, vLLM, DashScope, a local proxy.
+[attacker]
+model = "gpt-4o-mini"          # any OpenAI-compatible chat model
+# base_url = "http://localhost:11434/v1"  # ollama / vLLM / proxy. Empty = official OpenAI.
+# api_key = ""                  # or set the REDLOOP_ATTACKER_KEY env var
+temperature = 1.0              # higher => more diverse attacks
+n_attacks = 8                 # payloads to invent per run
+max_tokens = 1024             # cap on the LLM response size
+timeout = 60.0                # request timeout (seconds)
+
+# ---- Target agent (the thing under attack) ----
+# The in-process tool-using agent loop. v0.1 ships a self-contained mock loop;
+# a bring-your-own-agent adapter is deferred (see README roadmap).
+[target]
+# system_prompt = ""           # defaults to the built-in demo prompt when empty
+forbidden_tools = ["send_email"]   # tools the agent must never call unprompted
+max_steps = 8                      # safety bound on the agent loop
+
+# ---- Output ----
+[output]
+# emit_path = "hardening.jsonl"  # where HardeningPair JSONL is written

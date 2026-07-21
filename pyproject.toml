@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "redloop"
+version = "0.1.0"
+description = "Open-source adversarial prompt-injection red-team generator for tool-using agents. Auto-invents tool-call-hijacking attacks and emits hardening training data."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "SuperMarioYL" },
+]
+keywords = [
+    "prompt-injection",
+    "red-team",
+    "agent-security",
+    "adversarial",
+    "hardening",
+    "tool-use",
+    "llm-security",
+    "coding-agent",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Security",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+]
+dependencies = [
+    "typer>=0.12",
+    "openai>=1.40",
+    "pydantic>=2.7",
+    "rich>=13.7",
+]
+
+[project.scripts]
+redloop = "redloop.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/SuperMarioYL/redloop"
+Repository = "https://github.com/SuperMarioYL/redloop"
+Issues = "https://github.com/SuperMarioYL/redloop/issues"
+Changelog = "https://github.com/SuperMarioYL/redloop/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["redloop"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/redloop",
+    "/tests",
+    "/examples",
+    "/docs",
+    "/assets",
+    "/redloop.toml",
+    "/pyproject.toml",
+    "/README.md",
+    "/README.en.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+    "/VERSION",
+]

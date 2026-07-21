@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" width="880" height="300"
+     font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+     role="img" aria-label="RedLoop — Open-source adversarial prompt-injection red-team for tool-using agents">
+  <defs>
+    <linearGradient id="hg-d" x1="-220%" y1="0%" x2="-100%" y2="0%">
+      <stop offset="0%" stop-color="#FF6B5A"/>
+      <stop offset="50%" stop-color="#FFB340"/>
+      <stop offset="100%" stop-color="#FF6B5A"/>
+      <animate attributeName="x1" values="-220%;100%" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="-100%;220%" dur="5s" repeatCount="indefinite"/>
+    </linearGradient>
+    <linearGradient id="hb-d" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FF6B5A" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#FFB340" stop-opacity="0.03"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="880" height="300" fill="#1D1D1F"/>
+  <rect x="0" y="0" width="880" height="300" fill="url(#hb-d)"/>
+  <g opacity="0.12" stroke="#FF6B5A" stroke-width="1" fill="none">
+    <circle cx="120" cy="150" r="42"/>
+    <line x1="78" y1="150" x2="162" y2="150"/>
+    <line x1="120" y1="108" x2="120" y2="192"/>
+  </g>
+  <g opacity="0.09" stroke="#FFB340" stroke-width="1" fill="none">
+    <circle cx="760" cy="150" r="36"/>
+    <line x1="724" y1="150" x2="796" y2="150"/>
+    <line x1="760" y1="114" x2="760" y2="186"/>
+  </g>
+  <text x="440" y="148" text-anchor="middle" font-size="58" font-weight="700" fill="url(#hg-d)">RedLoop</text>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.4s" dur="0.8s" fill="freeze"/>
+    <animateTransform attributeName="transform" type="translate" from="0 8" to="0 0" begin="0.4s" dur="0.8s" fill="freeze"/>
+    <text x="440" y="194" text-anchor="middle" font-size="17" font-weight="500" fill="#A1A1A8">Open-source adversarial prompt-injection red-team for tool-using agents</text>
+  </g>
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.8s" dur="0.6s" fill="freeze"/>
+    <text x="440" y="222" text-anchor="middle" font-size="13" font-weight="400" fill="#A1A1A8">auto-invent attacks → replay → emit hardening training data</text>
+  </g>
+  <circle cx="440" cy="252" r="3" fill="#FF6B5A">
+    <animate attributeName="opacity" values="0.35;1;0.35" keyTimes="0;0.5;1" dur="2.4s"
+             calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" repeatCount="indefinite"/>
+  </circle>
+</svg>
