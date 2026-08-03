@@ -112,7 +112,7 @@ redloop run --no-emit
 | `redloop run --n N` | 发明 N 个攻击载荷 |
 | `redloop run --model ID` | 覆盖 attacker 模型 |
 | `redloop run --no-emit` | 只打印 eval 报告，不写文件 |
-| `redloop probe` | `run --preset demo` 的别名 |
+| `redloop probe` | `run --preset demo` 的别名（默认 dry-run，不写文件；`--emit PATH` 写 JSONL） |
 
 编程 API 见 [`examples/basic_usage.py`](./examples/basic_usage.py)。
 
@@ -136,6 +136,7 @@ redloop run --no-emit
 | `attacker.max_tokens` | int | `1024` | LLM 响应上限 |
 | `attacker.timeout` | float | `60.0` | 请求超时（秒） |
 | `target.forbidden_tools` | list | `["send_email"]` | agent 不应主动调用的工具 |
+| `target.system_prompt` | string | `""` | 目标 agent 系统提示词。空 = 内置 demo 提示词；填入即可把 RedLoop 指向你自己的 agent 提示词 |
 | `target.max_steps` | int | `8` | agent 循环安全上界 |
 | `output.emit_path` | string | `hardening.jsonl` | JSONL 输出路径 |
 

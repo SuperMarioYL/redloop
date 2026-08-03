@@ -529,12 +529,18 @@ class TargetAgent:
 def build_demo_target(
     files: Optional[dict[str, str]] = None,
     mailbox: Optional[list[dict[str, str]]] = None,
+    system_prompt: Optional[str] = None,
 ) -> tuple[TargetAgent, list[dict[str, str]]]:
     """Build the demo target agent + its shared mailbox.
 
     Returns the agent and the mailbox list (so the caller can inspect what
     send_email actually recorded). The default file set ships the hand-crafted
     injection in ``README.md``.
+
+    system_prompt : str | None
+        The target agent's system prompt. None / empty => the built-in
+        ``DEMO_SYSTEM_PROMPT`` (so callers can point RedLoop at their own
+        agent's prompt — the tool's "attacks against YOUR agent" value prop).
     """
 
     mb: list[dict[str, str]] = mailbox if mailbox is not None else []
@@ -543,9 +549,10 @@ def build_demo_target(
         "read_file": make_read_file(fs),
         "send_email": make_send_email(mb),
     }
+    sp = system_prompt if system_prompt else DEMO_SYSTEM_PROMPT
     agent = TargetAgent(
         tools=tools,
-        system_prompt=DEMO_SYSTEM_PROMPT,
+        system_prompt=sp,
         max_steps=8,
     )
     return agent, mb

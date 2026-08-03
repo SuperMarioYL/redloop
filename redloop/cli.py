@@ -245,6 +245,7 @@ def run(
         emit_path=emit_path,
         forbidden_tools=config.target.forbidden_tools,
         max_steps=config.target.max_steps,
+        system_prompt=config.target.system_prompt or None,
     )
 
     from redloop.harden import print_eval_report
@@ -260,10 +261,27 @@ def run(
 
 
 @app.command()
-def probe() -> None:
-    """Quick alias for `run --preset demo` (keyless hijack demo)."""
+def probe(
+    emit: Optional[Path] = typer.Option(
+        None,
+        "--emit",
+        "-e",
+        help="Write the demo HardeningPair JSONL to this path (default: dry-run, no file).",
+    ),
+    no_emit: bool = typer.Option(
+        False,
+        "--no-emit",
+        help="Explicitly suppress the JSONL write (the default dry-run behavior).",
+    ),
+) -> None:
+    """Quick alias for `run --preset demo` (keyless hijack demo).
 
-    emit_path = Path("demo_hardening.jsonl")
+    Defaults to a dry run (no JSONL written) so a quick probe never litters a
+    file; pass ``--emit <path>`` to capture the hardening pair, mirroring the
+    ``run --preset demo`` flag surface.
+    """
+
+    emit_path = None if no_emit else emit
     result = run_preset_demo(emit_path=emit_path)
     print_demo_result(result, emit_path=emit_path)
     if not result.hijacked:

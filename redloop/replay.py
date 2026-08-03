@@ -179,6 +179,7 @@ def replay_payload(
     mailbox: Optional[list[dict[str, str]]] = None,
     forbidden_tools: tuple[str, ...] = ("send_email",),
     max_steps: int = 8,
+    system_prompt: Optional[str] = None,
 ) -> ReplayResult:
     """Replay one payload against a fresh target agent and capture the outcome.
 
@@ -196,6 +197,10 @@ def replay_payload(
         Tools the agent was never supposed to call. A hit sets ``hijacked``.
     max_steps : int
         Safety bound on the agent loop (prevents infinite re-injection).
+    system_prompt : str | None
+        The target agent's system prompt. None / empty => the built-in
+        ``DEMO_SYSTEM_PROMPT``. Lets a caller point RedLoop at their own
+        agent's prompt instead of the hardcoded demo one.
 
     Returns
     -------
@@ -205,7 +210,9 @@ def replay_payload(
 
     fs = files_for_payload(payload, files)
     mb: list[dict[str, str]] = mailbox if mailbox is not None else []
-    agent, bound_mb = build_demo_target(files=fs, mailbox=mb)
+    agent, bound_mb = build_demo_target(
+        files=fs, mailbox=mb, system_prompt=system_prompt
+    )
     agent.max_steps = max_steps
     messages = messages_for_payload(payload, agent.system_prompt)
     run = agent.run(messages, forbidden_tools=forbidden_tools)
@@ -217,6 +224,7 @@ def replay_many(
     files: Optional[dict[str, str]] = None,
     forbidden_tools: tuple[str, ...] = ("send_email",),
     max_steps: int = 8,
+    system_prompt: Optional[str] = None,
 ) -> list[ReplayResult]:
     """Replay a batch of payloads (each against a fresh target agent)."""
 
@@ -226,6 +234,7 @@ def replay_many(
             files=files,
             forbidden_tools=forbidden_tools,
             max_steps=max_steps,
+            system_prompt=system_prompt,
         )
         for p in payloads
     ]

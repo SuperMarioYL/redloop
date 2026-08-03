@@ -401,6 +401,7 @@ def run_attack_campaign(
     forbidden_tools: tuple[str, ...] = ("send_email",),
     files: Optional[dict[str, str]] = None,
     max_steps: int = 8,
+    system_prompt: Optional[str] = None,
 ) -> tuple[list[ReplayResult], list[HardeningPair], EvalReport]:
     """Run the full m2+m3 pipeline: invent -> replay -> harden -> emit.
 
@@ -412,6 +413,13 @@ def run_attack_campaign(
     3. Converts every successful exploit into a :class:`HardeningPair`.
     4. Emits the pairs as JSONL to ``emit_path`` (if given).
     5. Builds an :class:`EvalReport` covering all attacks.
+
+    system_prompt : str | None
+        The target agent's system prompt. None / empty => the built-in
+        ``DEMO_SYSTEM_PROMPT``. Plumbed through to :func:`replay_many` so a
+        user can point RedLoop at their own agent's prompt (the tool's
+        "attacks against YOUR agent" value prop) instead of the hardcoded
+        demo prompt.
 
     Returns
     -------
@@ -431,6 +439,7 @@ def run_attack_campaign(
         files=files,
         forbidden_tools=forbidden_tools,
         max_steps=max_steps,
+        system_prompt=system_prompt,
     )
     pairs = [build_hardening_pair(r) for r in results if r.hijacked]
 
