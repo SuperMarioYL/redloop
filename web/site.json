@@ -29,6 +29,11 @@
       "title": { "zh": "每次劫持都变成训练数据", "en": "Every hijack becomes training data" },
       "body": { "zh": "每次成功的攻击被转成「攻击 + 期望安全响应 + exploit 轨迹」的训练对，写成 JSONL——红队的失败从此承载可复用信号。", "en": "Each successful attack becomes a training pair — attack + expected safe response + exploit trace — written as JSONL. Red-team failures finally carry reusable signal." },
       "chips": ["› 训练对 JSONL", "› 攻击+安全响应+轨迹", "› 闭合红队循环"]
+    },
+    {
+      "title": { "zh": "换上你关心的提示词再测", "en": "Swap in the prompt you actually care about" },
+      "body": { "zh": "在 redloop.toml 写上目标 Agent 的系统提示词，攻击就针对它重放——把内置 demo 换成你的真实场景。", "en": "Set the target Agent's system prompt in redloop.toml and the attacks replay against it — trade the built-in demo for your real scenario." },
+      "chips": ["› 自定义目标 prompt", "› 配置驱动", "› 仍可无 key"]
     }
   ],
   "scene": { "kind": "orbit" },
