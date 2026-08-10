@@ -248,6 +248,28 @@ def run(
         system_prompt=config.target.system_prompt or None,
     )
 
+    # v0.3.0 (fix-llm-fallback-misreports-mode): if the LLM attacker raised
+    # and fell back to deterministic mutation, surface it as a yellow panel so
+    # the console reflects what actually ran (the eval report already reads
+    # attacker_mode="deterministic (llm-failed)" via Attacker.mode).
+    if getattr(attacker, "fell_back", False):
+        console.print(
+            Panel(
+                Text.assemble(
+                    ("The attacker LLM call FAILED; ran deterministic mutations instead.\n", "yellow"),
+                    (f"Attacker mode: {attacker.mode}\n", "cyan"),
+                    (
+                        "The emitted JSONL is deterministic, NOT LLM-invented — "
+                        "the headline feature did not run. Fix the attacker key/endpoint "
+                        "and re-run for LLM-invented attacks.",
+                        "dim",
+                    ),
+                ),
+                title="[yellow]llm-failed fallback[/yellow]",
+                border_style="yellow",
+            )
+        )
+
     from redloop.harden import print_eval_report
 
     print_eval_report(report)

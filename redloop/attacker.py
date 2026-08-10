@@ -405,28 +405,48 @@ class Attacker:
 
     def __init__(self, config: AttackerConfig):
         self.config = config
+        # v0.3.0 (fix-llm-fallback-misreports-mode): flipped to True when the
+        # LLM call raises and we fall back to deterministic mutation, so the
+        # report + console reflect what actually ran instead of advertising "llm".
+        self.fell_back: bool = False
 
     @property
     def is_llm(self) -> bool:
-        return True
+        # Once the LLM call failed and we fell back, we are no longer running
+        # LLM-invented attacks — report honestly.
+        return not self.fell_back
 
     @property
     def mode(self) -> str:
-        return "llm"
+        return "deterministic (llm-failed)" if self.fell_back else "llm"
 
     def invent(
         self,
         seeds: list[AttackPayload],
         n: Optional[int] = None,
     ) -> list[AttackPayload]:
-        """Invent ``n`` (default ``config.n_attacks``) novel injection payloads."""
+        """Invent ``n`` (default ``config.n_attacks``) novel injection payloads.
 
-        target_n = n or self.config.n_attacks
+        v0.3.0 (fix-n-zero-default-ignored): an explicit ``n=0`` is honored
+        (returns ``[]``) — only ``None`` falls back to ``config.n_attacks``.
+        v0.3.0 (fix-llm-fallback-misreports-mode): when the LLM call raises,
+        sets ``self.fell_back = True`` and emits a stderr warning so the report
+        and console reflect the deterministic fallback instead of "llm".
+        """
+
+        target_n = self.config.n_attacks if n is None else n
         if not self.config.has_key():
             return mutate_payloads(seeds, target_n)
         try:
             return self._invent_with_llm(seeds, target_n)
-        except Exception:  # noqa: BLE001 --- fail-soft to keyless mutation
+        except Exception as exc:  # noqa: BLE001 --- fail-soft to keyless mutation
+            self.fell_back = True
+            print(
+                f"[redloop] attacker LLM call failed ({type(exc).__name__}: {exc}); "
+                f"falling back to deterministic mutation. The report will read "
+                f"attacker_mode={self.mode!r}, NOT 'llm'.",
+                file=sys.stderr,
+            )
             return mutate_payloads(seeds, target_n)
 
     def _invent_with_llm(
@@ -480,7 +500,9 @@ class DeterministicAttacker:
         seeds: list[AttackPayload],
         n: Optional[int] = None,
     ) -> list[AttackPayload]:
-        return mutate_payloads(seeds, n or self.config.n_attacks)
+        # v0.3.0 (fix-n-zero-default-ignored): honor an explicit n=0 (only None
+        # falls back to the default). mutate_payloads(seeds, 0) returns [].
+        return mutate_payloads(seeds, self.config.n_attacks if n is None else n)
 
 
 def build_attacker(

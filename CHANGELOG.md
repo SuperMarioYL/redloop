@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-11
+
+### Fixed
+- **Stop misreporting `attacker_mode` as `"llm"` when the LLM call failed and
+  fell back to deterministic** (`fix-llm-fallback-misreports-mode`). `Attacker.invent`
+  wrapped the LLM call in `except Exception: return mutate_payloads(...)` but
+  `Attacker.is_llm` / `Attacker.mode` were hardcoded to `True` / `"llm"` and never
+  updated on fallback — so a bad/expired key, wrong `base_url`, timeout, or empty
+  choices silently produced deterministic mutations labeled as LLM-invented, with no
+  warning. For a security red-team tool whose JSONL feeds hardening/training data, the
+  output was weaker than the user believed. Now the except branch sets a `fell_back`
+  flag and emits a stderr warning; `Attacker.mode` returns
+  `"deterministic (llm-failed)"` and `is_llm` returns `False` after a fallback, so the
+  eval report (`run_attack_campaign` → `build_eval_report`) and the CLI's post-campaign
+  yellow panel both reflect what actually ran. The fail-soft return is preserved.
+- **Honor an explicit `--n 0` instead of treating it as "use the default"**
+  (`fix-n-zero-default-ignored`). Both attacker `invent` methods resolved the count with
+  `n or self.config.n_attacks`, so `0 or 8` evaluated to `8` — `redloop run --n 0` and
+  programmatic `run_attack_campaign(..., n=0)` ran 8 attacks instead of 0. Replaced
+  with `self.config.n_attacks if n is None else n` in both `Attacker.invent` and
+  `DeterministicAttacker.invent` so an explicit 0 is honored (and
+  `mutate_payloads(seeds, 0)` already returns `[]` cleanly).
+
+### Added
+- `tests/test_v030.py` — regression coverage for both fixes (n=0 honored for both
+  attacker classes + `run_attack_campaign`; LLM-fallback sets `fell_back`, flips
+  `mode`/`is_llm`, and the campaign report reads `attacker_mode="deterministic
+  (llm-failed)"` via a monkeypatched failing LLM call).
+
 ## [0.2.0] - 2026-08-03
 
 ### Fixed
