@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-28
+
+### Fixed
+- **Stop mislabeling an empty / content-filtered attacker-LLM response as
+  `llm`** (`fix-llm-empty-content-mislabeled-llm`). `Attacker._invent_with_llm`
+  returned `parse_llm_payloads(text, n, seeds)`, and when the LLM returned
+  empty/`None` content (a content-filtered response, a `finish_reason=length`
+  cut, or prose with no `send_email(...)` directive) `parse_llm_payloads`
+  padded to deterministic mutations WITHOUT raising — so `fell_back` stayed
+  `False`, `Attacker.mode` returned `"llm"`, and the eval report read
+  `attacker_mode="llm"` while the emitted payloads were deterministic. This is
+  the same honesty bug v0.3.0's `fix-llm-fallback-misreports-mode` killed, but
+  that fix closed only the exception-raising path; the empty-content path
+  (the realistic trigger for an adversarial prompt generator) was left open.
+  `parse_llm_payloads` now takes a `pad` flag; `_invent_with_llm` parses with
+  `pad=False`, and a zero-real-payload response raises into the existing
+  honest except-branch (`fell_back=True`, mode
+  `"deterministic (llm-failed)"`). A partial response still pads to `n` and
+  honestly reports `"llm"`.
+- **Stop false-negativing the tool's own exfil attacks down to ESCAPE**
+  (`fix-severity-misses-own-exfil-attacks`). `classify_severity`'s keyword
+  lists omitted the mutator's own exfil vocabulary, so a `send_email`
+  exfiltrating `private keys` to `collect@malware.xyz` / `leak@dark.io` was
+  classified `ESCAPE` instead of `DATA_EXFIL`, understating the eval report's
+  severity. The body markers now include `"private key"` and the recipient
+  markers now include `"malware"`, `"dark"`, `"leak"`, `"collect"` (covering
+  the attack surface RedLoop itself generates; `"drop"` is intentionally
+  omitted to avoid false-positive on benign `dropbox@...` addresses — the
+  mutator's `drop@exfil.tld` is already caught by `"exfil"`).
+- **Stop leaving a stale `hardening.jsonl` on a no-land run**
+  (`fix-stale-hardening-jsonl-on-no-land`). `run_attack_campaign` gated emit
+  on `if emit_path is not None and pairs`, so a run that landed zero hijacks
+  (a hardened agent, a weak attacker, an `--n 0` sweep) never opened the file
+  and a prior run's pairs persisted on disk, mislabeled as this run's output
+  — a stale-data hazard for a security tool whose JSONL feeds training. Now
+  the file is always written when an `emit_path` is requested; a no-land run
+  produces an empty file (correctly reflecting "zero pairs this run").
+
+### Added
+- `tests/test_v040.py` — regression coverage for all three fixes: empty/None/
+  no-directive LLM content trips the honest fallback (and a partial response
+  does not); the expanded severity markers catch the mutator's own exfil
+  attacks without false-positiving a benign `dropbox@...` send; and a no-land
+  run with `--emit` truncates a prior run's `hardening.jsonl` to zero lines.
+
 ## [0.3.0] - 2026-08-11
 
 ### Fixed

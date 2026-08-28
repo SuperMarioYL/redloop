@@ -443,7 +443,13 @@ def run_attack_campaign(
     )
     pairs = [build_hardening_pair(r) for r in results if r.hijacked]
 
-    if emit_path is not None and pairs:
+    # v0.4.0 (fix-stale-hardening-jsonl-on-no-land): always write the file
+    # when an emit_path was requested, even when no hijacks landed.
+    # emit_jsonl([], path) opens in "w" (truncate) and writes zero lines, so a
+    # no-land run correctly produces an EMPTY file instead of silently leaving
+    # a prior run's stale hardening pairs on disk (a downstream fine-tuning
+    # loop would otherwise train on yesterday's data labeled as this run).
+    if emit_path is not None:
         emit_jsonl(pairs, emit_path)
 
     report = build_eval_report(

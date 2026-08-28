@@ -322,15 +322,21 @@ def parse_llm_payloads(
     text: str,
     n: int,
     seeds: list[AttackPayload],
+    pad: bool = True,
 ) -> list[AttackPayload]:
     """Parse the attacker LLM's response into AttackPayload objects.
 
     Tolerates format drift: tries JSON first, then falls back to scanning
     each line for a literal ``send_email(...)`` directive. Payloads without
     a directive are dropped (they cannot hijack the target's regex).
-    Deduplicates against the seeds and against earlier lines. If the LLM
-    under-delivers, pads with deterministic mutations so the caller always
-    gets ``n`` payloads.
+    Deduplicates against the seeds and against earlier lines. When ``pad``
+    is True (default) and the LLM under-delivers, pads with deterministic
+    mutations so the caller always gets ``n`` payloads. When ``pad`` is
+    False, returns ONLY the payloads the LLM actually contributed (no
+    padding) — used by :meth:`Attacker._invent_with_llm` to tell a
+    zero-real-payload LLM response (content filter / no directive) from a
+    genuine under-delivery, so an empty LLM contribution is reported as a
+    fallback instead of silent deterministic mutations labeled ``llm``.
     """
 
     seen: set[str] = {s.payload for s in seeds}
@@ -382,8 +388,10 @@ def parse_llm_payloads(
         if len(out) >= n:
             break
 
-    # Pad with deterministic mutations if the LLM under-delivered.
-    if len(out) < n:
+    # Pad with deterministic mutations if the LLM under-delivered. Disabled
+    # when ``pad=False`` so the caller can inspect how many payloads the LLM
+    # actually contributed (see Attacker._invent_with_llm).
+    if pad and len(out) < n:
         out.extend(mutate_payloads(seeds + out, n - len(out)))
 
     return out[:n]
@@ -432,6 +440,11 @@ class Attacker:
         v0.3.0 (fix-llm-fallback-misreports-mode): when the LLM call raises,
         sets ``self.fell_back = True`` and emits a stderr warning so the report
         and console reflect the deterministic fallback instead of "llm".
+        v0.4.0 (fix-llm-empty-content-mislabeled-llm): a zero-real-payload LLM
+        response (empty / content-filtered / no directive) is now also treated
+        as a fallback — ``_invent_with_llm`` raises so this except-branch sets
+        ``fell_back``; previously it silent-padded to deterministic mutations
+        and the report still read "llm".
         """
 
         target_n = self.config.n_attacks if n is None else n
@@ -474,7 +487,24 @@ class Attacker:
             max_tokens=self.config.max_tokens,
         )
         text = resp.choices[0].message.content or ""
-        return parse_llm_payloads(text, n, seeds)
+        # v0.4.0 (fix-llm-empty-content-mislabeled-llm): distinguish a
+        # zero-real-payload LLM response (empty / content-filtered / all prose
+        # with no send_email directive) from a genuine under-delivery. parse
+        # with pad=False so we see only what the LLM actually contributed; if
+        # that is nothing, raise so the existing honest except-branch in
+        # invent() sets fell_back=True and reports "deterministic
+        # (llm-failed)" instead of silent-padding to deterministic mutations
+        # mislabeled as "llm". A partial response (some real payloads) still
+        # pads to n and honestly reports "llm".
+        real = parse_llm_payloads(text, n, seeds, pad=False)
+        if not real:
+            raise RuntimeError(
+                "attacker LLM returned no usable send_email payloads "
+                "(empty / content-filtered / no directive)"
+            )
+        if len(real) < n:
+            real.extend(mutate_payloads(seeds + real, n - len(real)))
+        return real[:n]
 
 
 class DeterministicAttacker:
