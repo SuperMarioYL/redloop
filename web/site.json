@@ -27,8 +27,8 @@
     },
     {
       "title": { "zh": "每次劫持都变成训练数据", "en": "Every hijack becomes training data" },
-      "body": { "zh": "每次成功的攻击被转成「攻击 + 期望安全响应 + exploit 轨迹」的训练对，写成 JSONL——红队的失败从此承载可复用信号。", "en": "Each successful attack becomes a training pair — attack + expected safe response + exploit trace — written as JSONL. Red-team failures finally carry reusable signal." },
-      "chips": ["› 训练对 JSONL", "› 攻击+安全响应+轨迹", "› 闭合红队循环"]
+      "body": { "zh": "每次成功的攻击被转成「攻击 + 期望安全响应 + exploit 轨迹」的训练对，写成 JSONL。当攻击模型失败、被安全过滤或一次都没命中时，报告与产物文件都如实标注——你的强化数据不会被静默替换成更弱的版本。", "en": "Each successful attack becomes a training pair — attack + expected safe response + exploit trace — written as JSONL. When the attacker model fails, gets safety-filtered, or lands nothing, the report and output file say so honestly — your hardening data is never silently swapped for a weaker version." },
+      "chips": ["› 训练对 JSONL", "› 攻击+安全响应+轨迹", "› 失败如实标注", "› 闭合红队循环"]
     },
     {
       "title": { "zh": "换上你关心的提示词再测", "en": "Swap in the prompt you actually care about" },
