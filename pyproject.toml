@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "redloop"
 version = "0.4.0"
-description = "Open-source adversarial prompt-injection red-team generator for tool-using agents. Auto-invents tool-call-hijacking attacks and emits hardening training data."
+description = "Generate or replay prompt-injection examples against a deterministic tool-using target and export captured traces with suggested safe responses."
 readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"

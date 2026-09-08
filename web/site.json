@@ -1,46 +1,215 @@
 {
-  "schema": 1,
-  "name": "redloop",
+  "schema": 3,
+  "name": "RedLoop",
   "github": "https://github.com/SuperMarioYL/redloop",
   "host": "redloop.lei6393.com",
-  "lang": { "primary": "zh", "toggle": true },
-  "accent": ["#d4565a", "#b8453a"],
+  "palette": "auto",
+  "lang": {
+    "primary": "en",
+    "toggle": true
+  },
+  "meta": {
+    "visual_style": "neon-particle",
+    "demo_source": "docs/demo-results.json"
+  },
   "hero": {
-    "eyebrow": { "zh": "开源 · 红队 · 无需账号", "en": "Open-source · Red-team · No account" },
-    "headline": { "zh": "让你的 Agent\n先被攻击一次再上线", "en": "Attack your Agent\nbefore you ship it" },
-    "sub": { "zh": "自动发明 prompt-injection 攻击，重放劫持，产出可复用的强化训练数据——单进程 CLI，今天就能跑。", "en": "Auto-invents prompt-injection attacks, replays the hijack, and emits reusable hardening training data — a single-process CLI that runs today." },
-    "command": "redloop run --preset demo",
-    "cta": { "zh": "无 key 跑一遍", "en": "Run the keyless demo" },
-    "ctaGithub": { "zh": "GitHub", "en": "GitHub" },
-    "scroll": { "zh": "看它怎么工作", "en": "See how it works" }
+    "headline": {
+      "en": "Turn a replayed injection into an inspectable training record.",
+      "zh": "把重放的注入转成可检查的训练记录。"
+    },
+    "sub": {
+      "en": "RedLoop creates attack examples, replays them through a built-in tool loop and exports successful forbidden-call traces with a suggested safe response.",
+      "zh": "RedLoop 生成攻击示例，在内置工具循环中重放，并为成功触发的禁止调用导出轨迹与建议安全响应。"
+    },
+    "href": "#quickstart"
   },
   "advantages": [
     {
-      "title": { "zh": "一条命令，看见你的 Agent 被劫持", "en": "One command, watch your Agent get hijacked" },
-      "body": { "zh": "无需 API key——重放一个手工注入，当场打印 Agent 被诱导调用了不该调用的工具。", "en": "No API key needed — replay one hand-crafted injection and watch the Agent get tricked into calling a tool it shouldn't." },
-      "chips": ["› 无 key 演示", "› 可见劫持", "› 端到端跑通"]
+      "title": {
+        "en": "Keep the full example",
+        "zh": "保留完整示例"
+      },
+      "body": {
+        "en": "Payload, location, outcome and trace stay together.",
+        "zh": "载荷、位置、结果与轨迹保存在一起。"
+      }
     },
     {
-      "title": { "zh": "自动发明攻击，不止手写那几个", "en": "Auto-invents attacks, not just the few you'd hand-write" },
-      "body": { "zh": "攻击模型自动发明多个注入载荷并逐一重放——你不再需要手写少量注入 prompt、跑一次就扔。", "en": "The attacker model invents multiple injection payloads and replays each — you stop hand-writing a few prompts and running them once." },
-      "chips": ["› 自发明多个载荷", "› 逐一重放", "› 兼容 OpenAI-标准端点"]
+      "title": {
+        "en": "Reproduce without a key",
+        "zh": "无密钥复现"
+      },
+      "body": {
+        "en": "The demo and deterministic generator run locally.",
+        "zh": "示例与确定性生成器可本地运行。"
+      }
     },
     {
-      "title": { "zh": "每次劫持都变成训练数据", "en": "Every hijack becomes training data" },
-      "body": { "zh": "每次成功的攻击被转成「攻击 + 期望安全响应 + exploit 轨迹」的训练对，写成 JSONL。当攻击模型失败、被安全过滤或一次都没命中时，报告与产物文件都如实标注——你的强化数据不会被静默替换成更弱的版本。", "en": "Each successful attack becomes a training pair — attack + expected safe response + exploit trace — written as JSONL. When the attacker model fails, gets safety-filtered, or lands nothing, the report and output file say so honestly — your hardening data is never silently swapped for a weaker version." },
-      "chips": ["› 训练对 JSONL", "› 攻击+安全响应+轨迹", "› 失败如实标注", "› 闭合红队循环"]
-    },
-    {
-      "title": { "zh": "换上你关心的提示词再测", "en": "Swap in the prompt you actually care about" },
-      "body": { "zh": "在 redloop.toml 写上目标 Agent 的系统提示词，攻击就针对它重放——把内置 demo 换成你的真实场景。", "en": "Set the target Agent's system prompt in redloop.toml and the attacks replay against it — trade the built-in demo for your real scenario." },
-      "chips": ["› 自定义目标 prompt", "› 配置驱动", "› 仍可无 key"]
+      "title": {
+        "en": "Inspect the generation mode",
+        "zh": "检查生成模式"
+      },
+      "body": {
+        "en": "Reports distinguish model generation from deterministic fallback.",
+        "zh": "报告区分模型生成与确定性回退。"
+      }
     }
   ],
-  "scene": { "kind": "orbit" },
-  "cta": {
-    "headline": { "zh": "把红队循环开给每一个造 Agent 的团队", "en": "Open the red-team loop to every team building an Agent" },
-    "sub": { "zh": "开源 · MIT · 单进程 CLI，今天就能跑。", "en": "Open-source · MIT · single-process CLI, runs today." },
-    "button": { "zh": "看 Demo", "en": "See the demo" }
+  "demo": {
+    "title": {
+      "en": "Run it on a complete example",
+      "zh": "运行完整示例"
+    },
+    "note": {
+      "en": "Python 3.12+; replay the complete bundled fixture and read its JSONL record from a temporary directory.",
+      "zh": "需要 Python 3.12+；重放完整随仓 fixture，并从临时目录回读 JSONL 记录。"
+    },
+    "source": "https://github.com/SuperMarioYL/redloop/blob/main/docs/demo-results.json",
+    "steps": [
+      {
+        "label": "Recorded run",
+        "body": "A bundled injection fixture runs against the deliberately naive in-memory target and emits a training record. Email is only an in-memory list; no external action occurs.",
+        "command": ".venv/bin/python examples/presentation_demo.py",
+        "output": "{\n  \"target\": \"deterministic in-memory agent\",\n  \"calls\": [\n    \"read_file\",\n    \"send_email\"\n  ],\n  \"hijacked\": true,\n  \"severity\": \"data_exfil\",\n  \"simulated_mailbox_entries\": 1,\n  \"training_records\": 1,\n  \"record_fields\": [\n    \"attack\",\n    \"exploit_trace\",\n    \"outcome\",\n    \"safe_response\"\n  ]\n}",
+        "image": "/assets/presentation/demo-0-light.svg",
+        "imageDark": "/assets/presentation/demo-0-dark.svg"
+      }
+    ]
   },
-  "footer": { "tag": { "zh": "开源对抗式红队 · MIT", "en": "Open-source adversarial red-team · MIT" } }
+  "quickstart": {
+    "title": {
+      "en": "Try it locally",
+      "zh": "本地上手"
+    },
+    "body": {
+      "en": "Python 3.12+; replay the complete bundled fixture and read its JSONL record from a temporary directory.",
+      "zh": "需要 Python 3.12+；重放完整随仓 fixture，并从临时目录回读 JSONL 记录。"
+    },
+    "steps": [
+      {
+        "title": {
+          "en": "Install from source",
+          "zh": "从源码安装"
+        },
+        "code": "git clone https://github.com/SuperMarioYL/redloop.git\ncd redloop\npython3.12 -m venv .venv\nsource .venv/bin/activate\npython -m pip install -e ."
+      },
+      {
+        "title": {
+          "en": "Run the included example",
+          "zh": "运行随仓示例"
+        },
+        "code": ".venv/bin/python examples/presentation_demo.py"
+      }
+    ]
+  },
+  "limitations": [
+    {
+      "en": "The target is a deliberately naive rule-based mock, not a live LLM agent. Its hit rate does not measure security of external agents or models.",
+      "zh": "目标是刻意朴素的规则模拟器，不是在线 LLM Agent；其命中率不衡量外部 Agent 或模型的安全性。"
+    },
+    {
+      "en": "send_email writes to an in-memory mailbox; the demo sends no email or user data. forbidden_tools labels detected calls rather than acting as a runtime blocking policy.",
+      "zh": "send_email 只写内存邮箱，示例不发送邮件或用户数据。forbidden_tools 用来标注检测到的调用，不是运行时阻断策略。"
+    },
+    {
+      "en": "The exported safe responses are templates for review. No fine-tuning or measured hardening improvement is performed.",
+      "zh": "导出的 safe_response 是待审阅模板；工具未进行微调或测量防护改善。"
+    }
+  ],
+  "scene": {
+    "kind": "neon-graph",
+    "fallback": "/assets/presentation/scene-dark.svg",
+    "fallbackLight": "/assets/presentation/scene-light.svg"
+  },
+  "story": {
+    "intro": {
+      "title": {
+        "en": "A concrete task",
+        "zh": "从实际任务出发"
+      },
+      "body": {
+        "en": "A reusable example needs more than a payload string. Keeping the injection location, observed call and expected safe behavior together gives reviewers the context needed to judge a candidate training record.",
+        "zh": "可复用示例需要的不只是载荷字符串。把注入位置、观察到的调用与期望安全行为放在一起，便于审阅候选训练记录。"
+      }
+    },
+    "sections": [
+      {
+        "title": {
+          "en": "Follow the operation",
+          "zh": "处理过程"
+        },
+        "body": {
+          "en": "The attacker supplies seeded mutations or optional model-generated payloads. Replay constructs a fresh deterministic target with in-memory tools, records forbidden calls, and the hardening module serializes attack, outcome, safe_response and exploit_trace. Reports aggregate the replay outcomes.",
+          "zh": "attacker 提供种子变体或可选模型生成载荷；replay 构造新的确定性内存工具目标并记录禁止调用。hardening 将 attack、outcome、safe_response、exploit_trace 序列化，报告汇总重放结果。"
+        },
+        "image": {
+          "light": "/assets/presentation/process-light.svg",
+          "dark": "/assets/presentation/process-dark.svg",
+          "alt": {
+            "en": "Follow the operation",
+            "zh": "处理过程"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "Inside RedLoop",
+          "zh": "RedLoop 的内部流程"
+        },
+        "body": {
+          "en": "The attacker supplies seeded mutations or optional model-generated payloads. Replay constructs a fresh deterministic target with in-memory tools, records forbidden calls, and the hardening module serializes attack, outcome, safe_response and exploit_trace. Reports aggregate the replay outcomes.",
+          "zh": "attacker 提供种子变体或可选模型生成载荷；replay 构造新的确定性内存工具目标并记录禁止调用。hardening 将 attack、outcome、safe_response、exploit_trace 序列化，报告汇总重放结果。"
+        },
+        "image": {
+          "light": "/assets/presentation/architecture-light.svg",
+          "dark": "/assets/presentation/architecture-dark.svg",
+          "alt": {
+            "en": "Inside RedLoop",
+            "zh": "RedLoop 的内部流程"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "Connect the pieces",
+          "zh": "输入与输出"
+        },
+        "body": {
+          "en": "Choose the input and output route that matches your workflow. The local example below exercises the stated subset.",
+          "zh": "根据工作流选择输入与输出路径。本文本地示例验证其中明确说明的子流程。"
+        },
+        "image": {
+          "light": "/assets/presentation/integrations-light.svg",
+          "dark": "/assets/presentation/integrations-dark.svg",
+          "alt": {
+            "en": "Connect the pieces",
+            "zh": "输入与输出"
+          }
+        }
+      }
+    ],
+    "details": [
+      {
+        "title": {
+          "en": "Configuration",
+          "zh": "配置"
+        },
+        "body": {
+          "en": "redloop.toml defines attacker model, base_url, temperature, n_attacks, max_tokens and timeout; target defines forbidden_tools, max_steps and optional system_prompt. REDLOOP_ATTACKER_KEY enables online attack generation. Without a key the ordinary run uses deterministic generation; API failure can also fall back, so inspect attacker_mode. --no-emit avoids an output file; --emit selects JSONL, which is overwritten per campaign.",
+          "zh": "redloop.toml 配置 attacker 的 model、base_url、temperature、n_attacks、max_tokens、timeout；target 配置 forbidden_tools、max_steps 与可选 system_prompt。REDLOOP_ATTACKER_KEY 启用在线攻击生成。无密钥时普通 run 使用确定性生成，API 失败也可能回退，因此须检查 attacker_mode。--no-emit 不输出文件；--emit 指定 JSONL，每轮会覆盖。"
+        }
+      },
+      {
+        "title": {
+          "en": "Further use",
+          "zh": "进一步使用"
+        },
+        "body": {
+          "en": "Run these commands from the repository root after installation. Replace paths for your own data.",
+          "zh": "安装后在仓库根目录运行以下命令；处理自己的数据时替换相应路径。"
+        },
+        "code": "redloop run --preset demo --emit demo-hardening.jsonl\nredloop probe\n# Review redloop.toml before a campaign:\nredloop run --no-emit --n 4"
+      }
+    ]
+  }
 }

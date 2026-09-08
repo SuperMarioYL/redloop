@@ -1,0 +1,82 @@
+{
+  "name": "RedLoop",
+  "tagline": "Turn a replayed injection into an inspectable training record.",
+  "architecture": {
+    "title": "Inside RedLoop",
+    "nodes": [
+      {
+        "title": "Payload generation",
+        "detail": "redloop/attacker.py"
+      },
+      {
+        "title": "Fresh replay",
+        "detail": "redloop/replay.py"
+      },
+      {
+        "title": "In-memory target",
+        "detail": "redloop/target.py"
+      },
+      {
+        "title": "Training records",
+        "detail": "redloop/harden.py"
+      }
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ]
+    ]
+  },
+  "process": {
+    "title": "From input to a useful result",
+    "steps": [
+      {
+        "title": "Read fixture",
+        "detail": "Bundled file-content injection"
+      },
+      {
+        "title": "Replay mock target",
+        "detail": "read_file then send_email"
+      },
+      {
+        "title": "Export one pair",
+        "detail": "Outcome and safe-response fields"
+      }
+    ],
+    "result": "The mock target records read_file then send_email and exports one training record; no email leaves the process."
+  },
+  "integrations": {
+    "title": "Supported input and output routes",
+    "items": [
+      {
+        "title": "Seed payloads",
+        "detail": "Deterministic attack variants"
+      },
+      {
+        "title": "OpenAI-compatible API",
+        "detail": "Optional attacker generation"
+      },
+      {
+        "title": "Mock tool loop",
+        "detail": "In-memory files and mailbox"
+      },
+      {
+        "title": "HardeningPair JSONL",
+        "detail": "Trace and suggested safe response"
+      },
+      {
+        "title": "TOML",
+        "detail": "Attacker and target settings"
+      }
+    ]
+  }
+}
