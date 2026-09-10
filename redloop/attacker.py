@@ -408,7 +408,12 @@ class Attacker:
     Needs an OpenAI-compatible API key (set via ``AttackerConfig.api_key`` or
     the ``REDLOOP_ATTACKER_KEY`` env var). If the key is missing or the LLM
     call fails, :meth:`invent` falls back to the keyless deterministic
-    mutator so the self-play loop never hard-blocks on a missing key.
+    mutator so the self-play loop never hard-blocks on a missing key. Either
+    way the fallback is reported honestly: ``fell_back`` flips to True and
+    :attr:`mode` reads ``"deterministic (no-key)"`` / ``"deterministic
+    (llm-failed)"`` instead of advertising "llm" over deterministic mutations
+    (v0.5.0 closes the no-key branch; v0.3.0/v0.4.0 closed the failure and
+    empty-content branches).
     """
 
     def __init__(self, config: AttackerConfig):
@@ -417,6 +422,12 @@ class Attacker:
         # LLM call raises and we fall back to deterministic mutation, so the
         # report + console reflect what actually ran instead of advertising "llm".
         self.fell_back: bool = False
+        # v0.5.0 (fix-attacker-no-key-fallback-misreports-mode): WHY the
+        # fallback happened — "llm-failed" (the call raised / returned nothing
+        # usable) vs "no-key" (no key configured, so the LLM was never
+        # attempted). mode reports the reason so the label is not a lie in
+        # either direction.
+        self.fell_back_reason: str = "llm-failed"
 
     @property
     def is_llm(self) -> bool:
@@ -426,7 +437,7 @@ class Attacker:
 
     @property
     def mode(self) -> str:
-        return "deterministic (llm-failed)" if self.fell_back else "llm"
+        return f"deterministic ({self.fell_back_reason})" if self.fell_back else "llm"
 
     def invent(
         self,
@@ -445,10 +456,37 @@ class Attacker:
         as a fallback — ``_invent_with_llm`` raises so this except-branch sets
         ``fell_back``; previously it silent-padded to deterministic mutations
         and the report still read "llm".
+        v0.5.0 (fix-zero-n-with-key-spurious-llm-failure): a zero-or-negative
+        attack count short-circuits to ``[]`` BEFORE the key check, so an
+        explicit ``--n 0`` with a key set never makes a pointless LLM call only
+        to trip the zero-real-payload guard and report a false "llm-failed".
+        v0.5.0 (fix-attacker-no-key-fallback-misreports-mode): the documented
+        no-key fallback now sets ``fell_back`` with reason ``"no-key"`` (and
+        warns), so ``mode`` reads ``"deterministic (no-key)"`` instead of
+        mislabeling deterministic mutations as "llm".
         """
 
         target_n = self.config.n_attacks if n is None else n
+        # v0.5.0 (fix-zero-n-with-key-spurious-llm-failure): zero attacks need
+        # no LLM call and no fallback — return before the key check. (The
+        # deterministic path already returns [] for n <= 0 via
+        # mutate_payloads.)
+        if target_n <= 0:
+            return []
         if not self.config.has_key():
+            # v0.5.0 (fix-attacker-no-key-fallback-misreports-mode): the
+            # no-key branch is a fallback too — flag it like the except-branch
+            # does, with an accurate reason, so mode/is_llm and the eval
+            # report no longer say "llm" over deterministic mutations.
+            self.fell_back = True
+            self.fell_back_reason = "no-key"
+            print(
+                f"[redloop] no attacker API key configured "
+                f"(AttackerConfig.api_key or REDLOOP_ATTACKER_KEY); falling "
+                f"back to deterministic mutation. The report will read "
+                f"attacker_mode={self.mode!r}, NOT 'llm'.",
+                file=sys.stderr,
+            )
             return mutate_payloads(seeds, target_n)
         try:
             return self._invent_with_llm(seeds, target_n)
