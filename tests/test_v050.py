@@ -43,6 +43,7 @@ Runnable with::
 from __future__ import annotations
 
 import sys
+import tomllib
 import types
 import unittest
 from pathlib import Path
@@ -200,6 +201,56 @@ class TestZeroNWithKeyNoSpuriousFailure(unittest.TestCase):
         self.assertEqual(len(payloads), 2)  # 1 real + 1 padded
         self.assertFalse(att.fell_back)
         self.assertEqual(att.mode, "llm")
+
+
+class TestVersionLockstep(unittest.TestCase):
+    """fix-uv-lock-stale-since-v010: every version surface agrees at 0.5.0."""
+
+    VERSION = "0.5.0"
+
+    def test_version_file(self):
+        self.assertEqual(
+            (_REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip(),
+            self.VERSION,
+        )
+
+    def test_pyproject_version(self):
+        with (_REPO_ROOT / "pyproject.toml").open("rb") as f:
+            data = tomllib.load(f)
+        self.assertEqual(data["project"]["version"], self.VERSION)
+
+    def test_dunder_version(self):
+        self.assertEqual(redloop.__version__, self.VERSION)
+
+    def test_uv_lock_root_package_version(self):
+        with (_REPO_ROOT / "uv.lock").open("rb") as f:
+            lock = tomllib.load(f)
+        entry = next(
+            (p for p in lock.get("package", []) if p.get("name") == "redloop"), None
+        )
+        self.assertIsNotNone(entry, "uv.lock must carry the root redloop package")
+        self.assertEqual(entry.get("version"), self.VERSION)
+
+    def test_changelog_has_release_section(self):
+        changelog = (_REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+        self.assertIn(f"## [{self.VERSION}]", changelog)
+
+    def test_uv_lock_check_passes_on_shipped_tree(self):
+        # The lock must be current enough that `uv lock --check` exits 0 —
+        # the concrete failure mode of the stale 0.1.0 lock this fix ships.
+        import subprocess
+
+        proc = subprocess.run(
+            ["uv", "lock", "--check"],
+            cwd=_REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(
+            proc.returncode,
+            0,
+            f"uv lock --check failed on the shipped tree:\n{proc.stdout}{proc.stderr}",
+        )
 
 
 if __name__ == "__main__":

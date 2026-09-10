@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-11
+
+### Fixed
+- **Report the no-key fallback honestly instead of mislabeling it `llm`**
+  (`fix-attacker-no-key-fallback-misreports-mode`). `Attacker.invent`'s
+  documented no-key branch returned `mutate_payloads(seeds, target_n)`
+  without setting `fell_back`, so a directly-constructed keyless `Attacker`
+  (public API; the class docstring documents the no-key fallback) reported
+  `mode="llm"` / `is_llm=True`, and `run_attack_campaign` built an eval
+  report reading `attacker_mode="llm"` over payloads byte-identical to the
+  deterministic mutator's output — the same honesty bug family v0.3.0
+  (the exception path) and v0.4.0 (the empty-content path) closed, on the
+  one remaining un-flagged branch of `invent`. The no-key branch now sets
+  `fell_back=True` with reason `"no-key"` and emits a stderr warning;
+  `mode` reads `"deterministic (no-key)"`. The exception path's
+  `"deterministic (llm-failed)"` label is preserved verbatim (`mode` now
+  reports the fallback reason).
+- **Stop the false "llm-failed" report on `--n 0` with a key set**
+  (`fix-zero-n-with-key-spurious-llm-failure`). `Attacker.invent` had no
+  zero short-circuit, so with an attacker key set an explicit `--n 0` (the
+  semantics v0.3.0 shipped) made a real chat-completions call for a run that
+  needed zero payloads, then the v0.4.0 zero-real-payload guard raised —
+  printing a false "attacker LLM call failed" warning and flipping the
+  report to `attacker_mode="deterministic (llm-failed)"` when nothing had
+  failed. A zero-or-negative attack count now short-circuits to `[]` before
+  the key check: no LLM call, no warning, no fallback flag (matching the
+  deterministic path, which already returned `[]` for `n <= 0`).
+- **Regenerate the `uv.lock` that had been stale since v0.1.0, and guard
+  every version surface with a lockstep test**
+  (`fix-uv-lock-stale-since-v010`). The checked-in `uv.lock` pinned the
+  root `redloop` package at `0.1.0` through v0.2.0/v0.3.0/v0.4.0 — every
+  release bumped `pyproject.toml`/`VERSION`/`__init__.py` but never
+  re-locked — so `uv lock --check` failed on the shipped tree, `uv sync
+  --locked` / `uv run --locked` flows broke, and a contributor's first
+  `uv sync` silently rewrote the lock. The lock is regenerated (root entry
+  `0.5.0`, `uv lock --check` exits 0), and `tests/test_v050.py::
+  TestVersionLockstep` asserts `VERSION` == `pyproject.toml` version ==
+  `redloop.__version__` == the `uv.lock` root-package version ==
+  `0.5.0` and that `CHANGELOG.md` carries the release section, so a future
+  release cannot bump one surface and forget the others.
+
+### Added
+- `tests/test_v050.py` — regression coverage for all three fixes: the no-key
+  fallback flags itself and reports `deterministic (no-key)` end-to-end
+  through the eval report (with the `deterministic (llm-failed)` exception
+  path pinned verbatim); a zero-attack run with a key makes no LLM call,
+  prints no failure warning, and reports no false `llm-failed`; and every
+  version surface agrees at `0.5.0` with `uv lock --check` green.
+
 ## [0.4.0] - 2026-08-28
 
 ### Fixed
