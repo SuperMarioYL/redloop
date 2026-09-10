@@ -238,8 +238,16 @@ class TestVersionLockstep(unittest.TestCase):
     def test_uv_lock_check_passes_on_shipped_tree(self):
         # The lock must be current enough that `uv lock --check` exits 0 —
         # the concrete failure mode of the stale 0.1.0 lock this fix ships.
+        # Runs only where the uv binary exists (dev machines); the pip-based
+        # CI image does not ship uv, and the tomllib lockstep assertions
+        # above already pin the version invariant there.
+        import shutil
         import subprocess
 
+        if shutil.which("uv") is None:
+            self.skipTest(
+                "uv binary not available (lockstep pinned via tomllib tests)"
+            )
         proc = subprocess.run(
             ["uv", "lock", "--check"],
             cwd=_REPO_ROOT,
