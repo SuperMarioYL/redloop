@@ -23,11 +23,13 @@ from __future__ import annotations
 
 import os
 import sys
+import tomllib
 from pathlib import Path
 from typing import Optional
 
 import typer
 from rich.console import Console
+from rich.markup import escape
 from rich.panel import Panel
 from rich.text import Text
 
@@ -57,6 +59,19 @@ app = typer.Typer(
 )
 
 console = Console()
+
+
+def _user_error(message: str) -> None:
+    """Print ONE named user-input error and exit 2 (v0.6.0 error boundary).
+
+    User-input failures (a malformed redloop.toml, an unwritable --emit path)
+    must surface as a single actionable line, not typer's raw internal
+    traceback (v0.6.0 fix-cli-input-error-tracebacks: a typo'd config file used
+    to leak ~40 frames of tomllib internals). The message is escaped so OSError
+    strings like "[Errno 21] ..." are not parsed as rich markup.
+    """
+    console.print(f"[red]{escape(message)}[/red]")
+    raise typer.Exit(2)
 
 
 def _version_callback(value: bool) -> None:
@@ -187,14 +202,27 @@ def run(
 
     if preset == DEMO_PRESET_NAME:
         emit_path = None if no_emit else (emit or "demo_hardening.jsonl")
-        result = run_preset_demo(emit_path=emit_path)
+        # v0.6.0 (fix-cli-input-error-tracebacks): the demo's only filesystem
+        # I/O is the emit write — an unwritable path must print one named
+        # error + exit 2, not a raw traceback from emit_jsonl's mkdir.
+        try:
+            result = run_preset_demo(emit_path=emit_path)
+        except OSError as exc:
+            _user_error(f"Cannot write {emit_path}: {exc}")
         print_demo_result(result, emit_path=emit_path)
         if not result.hijacked:
             raise typer.Exit(1)
         return
 
     # Full auto-invention mode.
-    config = load_config(config_path)
+    # v0.6.0 (fix-cli-input-error-tracebacks): the config file is hand-edited
+    # by design, so malformed TOML, a bad value type (int()/float() coercion),
+    # and an unreadable --config path are the most likely user errors — print
+    # one named error + exit 2 instead of leaking the internal traceback.
+    try:
+        config = load_config(config_path)
+    except (tomllib.TOMLDecodeError, ValueError, TypeError, OSError) as exc:
+        _user_error(f"Invalid config file {config_path}: {exc}")
 
     attacker_cfg = config.attacker
     if model is not None:
@@ -238,15 +266,21 @@ def run(
             f"[cyan]Attacker mode: {mode_label}  model: {attacker_cfg.model}[/cyan]"
         )
 
-    results, pairs, report = run_attack_campaign(
-        attacker=attacker,
-        seeds=SEED_PAYLOADS,
-        n=n,
-        emit_path=emit_path,
-        forbidden_tools=config.target.forbidden_tools,
-        max_steps=config.target.max_steps,
-        system_prompt=config.target.system_prompt or None,
-    )
+    # v0.6.0 (fix-cli-input-error-tracebacks): the campaign's only filesystem
+    # I/O is the emit write — an unwritable --emit path must print one named
+    # error + exit 2, not a raw traceback from emit_jsonl's mkdir.
+    try:
+        results, pairs, report = run_attack_campaign(
+            attacker=attacker,
+            seeds=SEED_PAYLOADS,
+            n=n,
+            emit_path=emit_path,
+            forbidden_tools=config.target.forbidden_tools,
+            max_steps=config.target.max_steps,
+            system_prompt=config.target.system_prompt or None,
+        )
+    except OSError as exc:
+        _user_error(f"Cannot write {emit_path}: {exc}")
 
     # v0.3.0 (fix-llm-fallback-misreports-mode): if the LLM attacker raised
     # and fell back to deterministic mutation, surface it as a yellow panel so
@@ -304,7 +338,12 @@ def probe(
     """
 
     emit_path = None if no_emit else emit
-    result = run_preset_demo(emit_path=emit_path)
+    # v0.6.0 (fix-cli-input-error-tracebacks): same emit-write boundary as
+    # `run --preset demo` — one named error + exit 2, no raw traceback.
+    try:
+        result = run_preset_demo(emit_path=emit_path)
+    except OSError as exc:
+        _user_error(f"Cannot write {emit_path}: {exc}")
     print_demo_result(result, emit_path=emit_path)
     if not result.hijacked:
         raise typer.Exit(1)

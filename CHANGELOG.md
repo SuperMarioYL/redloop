@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-15
+
+### Fixed
+- **Attach the built wheel, sdist, and checksums to the GitHub Release instead
+  of shipping zero assets**
+  (`fix-release-ships-zero-assets`). The release workflow built `dist/` and
+  generated checksums, but its last step was `actions/upload-artifact` — a CI
+  artifact private to the workflow run — and no step ever uploaded anything to
+  the release. The v0.5.0 release shipped with ZERO downloadable assets even
+  though its release run completed green. A new `publish` job now downloads
+  the dist artifact, creates the release if missing, and `gh release upload`s
+  the wheel + sdist + `checksums.txt` onto it (pattern copied from the fixed
+  sibling `subjectpurge`); workflow-level permissions are tightened to
+  `contents: read` with `contents: write` scoped to the publish job.
+- **Print one named error + exit code 2 on user-input failures instead of a
+  raw internal traceback** (`fix-cli-input-error-tracebacks`). Four verified
+  error paths dumped raw internal tracebacks at the user: a malformed
+  `redloop.toml` leaked ~40 frames of `tomllib` internals ending in
+  `TOMLDecodeError`; `[attacker] n_attacks = "eight"` leaked
+  `ValueError: invalid literal for int()` from the unguarded coercion;
+  `--config <directory>` leaked `IsADirectoryError`; and an unwritable
+  `--emit` path leaked `PermissionError`/`NotADirectoryError` from
+  `emit_jsonl`'s `mkdir`. The CLI now owns the boundary: config-load errors
+  print `Invalid config file <path>: <msg>` and emit-write errors print
+  `Cannot write <path>: <msg>`, both exiting 2 (the same one-line style the
+  CLI already used for the unknown-preset error). No blanket catch: the
+  config and emit boundaries are the only filesystem/user input on those
+  paths.
+
 ## [0.5.0] - 2026-09-11
 
 ### Fixed

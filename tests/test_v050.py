@@ -206,7 +206,7 @@ class TestZeroNWithKeyNoSpuriousFailure(unittest.TestCase):
 class TestVersionLockstep(unittest.TestCase):
     """fix-uv-lock-stale-since-v010: every version surface agrees at 0.5.0."""
 
-    VERSION = "0.5.0"
+    VERSION = "0.6.0"
 
     def test_version_file(self):
         self.assertEqual(
