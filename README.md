@@ -17,7 +17,7 @@ RedLoop 生成攻击示例，在内置工具循环中重放，并为成功触发
 
 可复用示例需要的不只是载荷字符串。把注入位置、观察到的调用与期望安全行为放在一起，便于审阅候选训练记录。
 
-- **保留完整示例** — 载荷、位置、结果与轨迹保存在一起。
+- **保留完整示例** — 载荷、位置、结果与轨迹保存在一起（含捕获调用的参数）。
 - **无密钥复现** — 示例与确定性生成器可本地运行。
 - **检查生成模式** — 报告区分模型生成与确定性回退。
 
@@ -107,7 +107,7 @@ redloop run --no-emit --n 4
 
 ## 配置
 
-redloop.toml 配置 attacker 的 model、base_url、temperature、n_attacks、max_tokens、timeout；target 配置 forbidden_tools、max_steps 与可选 system_prompt。REDLOOP_ATTACKER_KEY 启用在线攻击生成。无密钥时普通 run 使用确定性生成，API 失败也可能回退，因此须检查 attacker_mode。--no-emit 不输出文件；--emit 指定 JSONL，每轮会覆盖。
+redloop.toml 配置 attacker 的 model、base_url、temperature、n_attacks、max_tokens、timeout；target 配置 forbidden_tools、max_steps 与可选 system_prompt。REDLOOP_ATTACKER_KEY 启用在线攻击生成。无密钥时普通 run 使用确定性生成，API 失败也可能回退，因此须检查 attacker_mode。--no-emit 不输出文件；--emit 指定 JSONL，每轮会覆盖。`init --path` 指向无法写入的位置时，命令打印一行具名错误并以 2 退出，而不是内部回溯。
 
 ## 集成与职责分工
 

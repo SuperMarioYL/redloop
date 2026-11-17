@@ -330,7 +330,10 @@ def _render_plain(report: EvalReport) -> str:
         lines.append("")
         lines.append("By strategy (landed):")
         for s, n in sorted(report.strategy_hits.items(), key=lambda x: -x[1]):
-            lines.append(f"  {s[:48]:48s} {n}")
+            # v0.7.0 (q-distinct-strategy-report-rows): print the whole key —
+            # a fixed-width slice made buckets that differ late in the string
+            # render as identical rows.
+            lines.append(f"  {s} {n}")
     return "\n".join(lines)
 
 
@@ -343,8 +346,12 @@ def render_eval_report(report: EvalReport) -> Any:
         return _render_plain(report)
 
     table = Table(title="RedLoop Eval Report", show_header=True, header_style="bold cyan")
-    table.add_column("Metric", style="cyan", no_wrap=True)
-    table.add_column("Value", style="magenta")
+    # v0.7.0 (q-distinct-strategy-report-rows): the metric column also carries
+    # full strategy keys, so bound it and let rich wrap there instead of
+    # letting one long key expand the column and squeeze the value column to
+    # zero width. The value column must never wrap.
+    table.add_column("Metric", style="cyan", max_width=60)
+    table.add_column("Value", style="magenta", no_wrap=True)
 
     table.add_row("Total attacks", str(report.total_attacks))
     table.add_row("Landed (hijacked)", str(report.landed))
@@ -365,7 +372,9 @@ def render_eval_report(report: EvalReport) -> Any:
 
     if report.strategy_hits:
         for strat, n in sorted(report.strategy_hits.items(), key=lambda x: -x[1]):
-            table.add_row(f"  strategy: {strat[:44]}", str(n))
+            # v0.7.0 (q-distinct-strategy-report-rows): the full key, wrapped
+            # by rich; truncating to a fixed width hid the distinguishing tail.
+            table.add_row(f"  strategy: {strat}", str(n))
 
     return table
 

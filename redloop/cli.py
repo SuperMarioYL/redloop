@@ -129,6 +129,13 @@ def init(
             )
         )
         raise typer.Exit(1) from exc
+    except OSError as exc:
+        # v0.7.0 (fix-init-path-tracebacks): a missing parent directory or a
+        # directory target is the same class of user-input mistake the config
+        # and emit boundaries already report by name. FileExistsError (handled
+        # above) is an OSError subclass, so this clause only sees real write
+        # failures.
+        _user_error(f"Cannot write {path}: {exc}")
 
     console.print(
         Panel(

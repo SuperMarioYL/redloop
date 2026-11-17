@@ -318,6 +318,79 @@ def mutate_payloads(
 # --------------------------------------------------------------------------- #
 
 
+_VECTOR_VALUES = frozenset(v.value for v in InjectionVector)
+
+
+def _strip_fences(text: str) -> str:
+    """Drop triple-backtick fence lines so a fenced block reads as content."""
+
+    return "\n".join(
+        line for line in text.splitlines() if not line.strip().startswith("```")
+    )
+
+
+def _json_records(text: str) -> list[dict]:
+    """Extract JSON object records from a whole attacker response.
+
+    Walks the fence-stripped text with ``json.JSONDecoder.raw_decode`` from
+    every ``{`` / ``[`` occurrence, so a single pretty-printed object, a JSON
+    array, a fenced block, and one-object-per-line JSONL all yield their
+    records intact. Returns ``[]`` when the text carries no decodable JSON
+    document (a plain-text payload), which is the caller's signal to fall back
+    to the per-line directive scan.
+
+    v0.7.0 (fix-multiline-json-payload-mangling): a pretty-printed object used
+    to be read line by line, so its continuation lines became "payloads" — a
+    truncated JSON fragment that still contained ``send_email`` and was
+    therefore accepted and labeled ``llm-invented``.
+    """
+
+    body = _strip_fences(text)
+    decoder = json.JSONDecoder()
+    records: list[dict] = []
+    pos = 0
+    while True:
+        starts = [i for i in (body.find("{", pos), body.find("[", pos)) if i != -1]
+        if not starts:
+            return records
+        start = min(starts)
+        try:
+            doc, consumed = decoder.raw_decode(body[start:])
+        except json.JSONDecodeError:
+            pos = start + 1
+            continue
+        if isinstance(doc, dict):
+            records.append(doc)
+        elif isinstance(doc, list):
+            records.extend(item for item in doc if isinstance(item, dict))
+        pos = start + consumed
+
+
+def _payload_from_record(
+    obj: dict,
+    index: int,
+) -> Optional[AttackPayload]:
+    """Build one payload from a parsed JSON record, or None when it cannot hijack."""
+
+    payload = obj.get("payload")
+    if not isinstance(payload, str) or "send_email" not in payload.lower():
+        return None
+
+    raw_vector = obj.get("vector")
+    vector = (
+        InjectionVector(raw_vector)
+        if isinstance(raw_vector, str) and raw_vector in _VECTOR_VALUES
+        else _VECTORS[index % len(_VECTORS)]
+    )
+    raw_strategy = obj.get("strategy")
+    strategy = (
+        raw_strategy
+        if isinstance(raw_strategy, str) and raw_strategy
+        else "llm-invented"
+    )
+    return AttackPayload(payload=payload, vector=vector, strategy=strategy)
+
+
 def parse_llm_payloads(
     text: str,
     n: int,
@@ -326,10 +399,12 @@ def parse_llm_payloads(
 ) -> list[AttackPayload]:
     """Parse the attacker LLM's response into AttackPayload objects.
 
-    Tolerates format drift: tries JSON first, then falls back to scanning
-    each line for a literal ``send_email(...)`` directive. Payloads without
+    Tolerates format drift: a response containing JSON records (one object per
+    line, a pretty-printed object, a JSON array, or any of those inside a
+    fenced block) is read record-by-record; a plain-text response is scanned
+    line by line for a literal ``send_email(...)`` directive. Payloads without
     a directive are dropped (they cannot hijack the target's regex).
-    Deduplicates against the seeds and against earlier lines. When ``pad``
+    Deduplicates against the seeds and against earlier records. When ``pad``
     is True (default) and the LLM under-delivers, pads with deterministic
     mutations so the caller always gets ``n`` payloads. When ``pad`` is
     False, returns ONLY the payloads the LLM actually contributed (no
@@ -341,52 +416,34 @@ def parse_llm_payloads(
 
     seen: set[str] = {s.payload for s in seeds}
     out: list[AttackPayload] = []
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
 
-    for i, line in enumerate(lines):
-        payload: Optional[str] = None
-        vector: Optional[InjectionVector] = None
-        strategy = "llm-invented"
-
-        # Strip markdown fences if the LLM wrapped the block.
-        if line.startswith("```"):
-            continue
-        line = line.removeprefix("```json").removeprefix("```").strip()
-
-        if line.startswith("{"):
-            try:
-                obj = json.loads(line)
-                payload = obj.get("payload")
-                v = obj.get("vector")
-                if isinstance(v, str) and v in (
-                    InjectionVector.USER_MSG.value,
-                    InjectionVector.TOOL_RESULT.value,
-                    InjectionVector.FILE_CONTENT.value,
-                ):
-                    vector = InjectionVector(v)
-                strat = obj.get("strategy")
-                if isinstance(strat, str) and strat:
-                    strategy = strat
-            except json.JSONDecodeError:
-                payload = line  # treat the raw line as a payload string
-        else:
-            payload = line
-
-        if not payload:
-            continue
-        if "send_email" not in payload.lower():
-            continue  # cannot hijack the target's regex without the directive
-        if vector is None:
-            vector = _VECTORS[i % len(_VECTORS)]
-        if payload in seen:
-            continue
-
-        seen.add(payload)
-        out.append(
-            AttackPayload(payload=payload, vector=vector, strategy=strategy)
-        )
-        if len(out) >= n:
-            break
+    records = _json_records(text)
+    if records:
+        for index, obj in enumerate(records):
+            candidate = _payload_from_record(obj, index)
+            if candidate is None or candidate.payload in seen:
+                continue
+            seen.add(candidate.payload)
+            out.append(candidate)
+            if len(out) >= n:
+                break
+    else:
+        # No JSON document at all: the response is plain text, so keep the
+        # tolerant scan that accepts any line carrying a literal directive.
+        for index, raw_line in enumerate(_strip_fences(text).splitlines()):
+            line = raw_line.strip()
+            if not line or "send_email" not in line.lower() or line in seen:
+                continue
+            seen.add(line)
+            out.append(
+                AttackPayload(
+                    payload=line,
+                    vector=_VECTORS[index % len(_VECTORS)],
+                    strategy="llm-invented",
+                )
+            )
+            if len(out) >= n:
+                break
 
     # Pad with deterministic mutations if the LLM under-delivered. Disabled
     # when ``pad=False`` so the caller can inspect how many payloads the LLM

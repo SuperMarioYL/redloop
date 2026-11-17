@@ -17,7 +17,7 @@ RedLoop creates attack examples, replays them through a built-in tool loop and e
 
 A reusable example needs more than a payload string. Keeping the injection location, observed call and expected safe behavior together gives reviewers the context needed to judge a candidate training record.
 
-- **Keep the full example** — Payload, location, outcome and trace stay together.
+- **Keep the full example** — Payload, location, outcome and trace stay together, including the captured call's arguments.
 - **Reproduce without a key** — The demo and deterministic generator run locally.
 - **Inspect the generation mode** — Reports distinguish model generation from deterministic fallback.
 
@@ -107,7 +107,7 @@ redloop run --no-emit --n 4
 
 ## Configuration
 
-redloop.toml defines attacker model, base_url, temperature, n_attacks, max_tokens and timeout; target defines forbidden_tools, max_steps and optional system_prompt. REDLOOP_ATTACKER_KEY enables online attack generation. Without a key the ordinary run uses deterministic generation; API failure can also fall back, so inspect attacker_mode. --no-emit avoids an output file; --emit selects JSONL, which is overwritten per campaign.
+redloop.toml defines attacker model, base_url, temperature, n_attacks, max_tokens and timeout; target defines forbidden_tools, max_steps and optional system_prompt. REDLOOP_ATTACKER_KEY enables online attack generation. Without a key the ordinary run uses deterministic generation; API failure can also fall back, so inspect attacker_mode. --no-emit avoids an output file; --emit selects JSONL, which is overwritten per campaign. When `init --path` cannot be written, the command prints one named error and exits 2 instead of an internal traceback.
 
 ## Integrations and responsibilities
 

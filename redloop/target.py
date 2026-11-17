@@ -261,8 +261,14 @@ _TOOL_CALL_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Extracts ``key="value"`` pairs from an args string (single quotes too).
-_KWARG_RE = re.compile(r"""(\w+)\s*=\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)')""")
+# Extracts ``key="value"`` / ``key='value'`` / ``key=value`` pairs from an args
+# string. The bare-value alternative exists because ``_TOOL_CALL_RE`` above
+# already accepts unquoted argument text: if this pattern only read quoted
+# values, a recognised call would silently lose every unquoted argument
+# (v0.7.0 fix-unquoted-kwarg-arguments-dropped).
+_KWARG_RE = re.compile(
+    r"""(\w+)\s*=\s*(?:"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|([^,)"']+))"""
+)
 
 # Markers that signal an instruction-override (for analysis/strategy text).
 _OVERRIDE_MARKERS: tuple[str, ...] = (
@@ -278,12 +284,19 @@ _OVERRIDE_MARKERS: tuple[str, ...] = (
 
 
 def _parse_kwargs(args_str: str) -> dict[str, str]:
-    """Parse ``key="value"`` (or ``key='value'``) pairs from an args string."""
+    """Parse ``key="value"`` / ``key='value'`` / ``key=value`` pairs from an args string."""
 
     kwargs: dict[str, str] = {}
     for m in _KWARG_RE.finditer(args_str):
         key = m.group(1)
-        val = m.group(2) if m.group(2) is not None else m.group(3) or ""
+        if m.group(2) is not None:
+            val = m.group(2)
+        elif m.group(3) is not None:
+            val = m.group(3)
+        else:
+            # Bare value: stop characters are excluded by the pattern, so the
+            # whitespace left around the value is the only cleanup needed.
+            val = m.group(4).strip()
         kwargs[key] = val
     return kwargs
 

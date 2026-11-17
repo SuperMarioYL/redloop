@@ -11,7 +11,7 @@
   "meta": {
     "visual_style": "neon-particle",
     "demo_source": "docs/demo-results.json",
-    "content_version": "0.6.0"
+    "content_version": "0.7.0"
   },
   "hero": {
     "headline": {
@@ -31,8 +31,8 @@
         "zh": "保留完整示例"
       },
       "body": {
-        "en": "Payload, location, outcome and trace stay together.",
-        "zh": "载荷、位置、结果与轨迹保存在一起。"
+        "en": "Payload, location, outcome and trace stay together, including the captured call's arguments.",
+        "zh": "载荷、位置、结果与轨迹保存在一起，包括捕获调用的参数。"
       }
     },
     {
@@ -208,8 +208,8 @@
           "zh": "配置"
         },
         "body": {
-          "en": "redloop.toml defines attacker model, base_url, temperature, n_attacks, max_tokens and timeout; target defines forbidden_tools, max_steps and optional system_prompt. REDLOOP_ATTACKER_KEY enables online attack generation. Without a key the ordinary run uses deterministic generation; API failure can also fall back, so inspect attacker_mode. --no-emit avoids an output file; --emit selects JSONL, which is overwritten per campaign.",
-          "zh": "redloop.toml 配置 attacker 的 model、base_url、temperature、n_attacks、max_tokens、timeout；target 配置 forbidden_tools、max_steps 与可选 system_prompt。REDLOOP_ATTACKER_KEY 启用在线攻击生成。无密钥时普通 run 使用确定性生成，API 失败也可能回退，因此须检查 attacker_mode。--no-emit 不输出文件；--emit 指定 JSONL，每轮会覆盖。"
+          "en": "redloop.toml defines attacker model, base_url, temperature, n_attacks, max_tokens and timeout; target defines forbidden_tools, max_steps and optional system_prompt. REDLOOP_ATTACKER_KEY enables online attack generation. Without a key the ordinary run uses deterministic generation; API failure can also fall back, so inspect attacker_mode. --no-emit avoids an output file; --emit selects JSONL, which is overwritten per campaign. v0.7 keeps arguments that were written without quotes, reads a pretty-printed attacker response as records, and reports an unwritable `init --path` as one named error.",
+          "zh": "redloop.toml 配置 attacker 的 model、base_url、temperature、n_attacks、max_tokens、timeout；target 配置 forbidden_tools、max_steps 与可选 system_prompt。REDLOOP_ATTACKER_KEY 启用在线攻击生成。无密钥时普通 run 使用确定性生成，API 失败也可能回退，因此须检查 attacker_mode。--no-emit 不输出文件；--emit 指定 JSONL，每轮会覆盖。v0.7 保留未加引号的调用参数，按记录解析模型的多行 JSON 响应，并在 `init --path` 无法写入时输出一行具名错误。"
         }
       },
       {
